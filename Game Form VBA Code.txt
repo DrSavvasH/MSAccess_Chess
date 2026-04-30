@@ -1,0 +1,1369 @@
+Option Compare Database
+Public fromClick As Boolean
+Public x1, y1, x2, y2 As Integer
+Public xy1, xy2 As String
+Public CurrMovingPiece As Integer
+Public ExistingPID As Integer
+Public ExistingP As String
+Public Thinking As Boolean
+Public playersTurn As Integer
+
+Private Sub b7_Click()
+If fromClick = False Then Exit Sub
+x2 = 2
+y2 = 7
+End Sub
+
+Private Sub Command155_Click()
+DoCmd.SetWarnings (WarningsOff)
+DoCmd.OpenQuery ("CleanBoard")
+DoCmd.OpenQuery ("BoardSetupQuery")
+DoCmd.SetWarnings (WarningsOn)
+Boardrefresh
+'DoCmd.RunSQL "SELECT * INTO [TEMPBLACKMOVES] FROM [ALLBLACKMOVES];"
+'DoCmd.RunSQL "SELECT * INTO [TEMPWHITESQUARES] FROM [ALLWHITESQUARES];"
+End Sub
+
+Public Sub Boardrefresh()
+'Fix Board Colors
+'Color_Hex_To_Long("#ECECEC")
+'Color_Hex_To_Long("#CCC8C2")
+For a = 1 To 8 Step 2
+For b = 1 To 8 Step 2
+Me(Chr(96 + a) & b).BackColor = Color_Hex_To_Long("#CDBA96")
+Next b
+Next a
+For C = 2 To 9 Step 2
+For d = 2 To 8 Step 2
+Me(Chr(96 + C) & d).BackColor = Color_Hex_To_Long("#CDBA96")
+Next d
+Next C
+For E = 3 To 9 Step 2
+For f = 1 To 8 Step 2
+Me(Chr(95 + E) & f).BackColor = Color_Hex_To_Long("#EEE9E9")
+Next f
+Next E
+For g = 2 To 9 Step 2
+For h = 2 To 8 Step 2
+Me(Chr(95 + g) & h).BackColor = Color_Hex_To_Long("#EEE9E9")
+Next h
+Next g
+' Find all pieces on Query of Gameplay and move them to assigned location
+Dim db As DAO.Database
+Dim boxName As String
+Dim boxTop As Double
+Dim boxLeft As Double
+Set db = CurrentDb
+Set rstcategories = db.OpenRecordset("_GamePlayQuery", dbOpenDynaset)
+With rstcategories
+    Do While Not .EOF
+        If Not IsNull(![ChessPieces_ChessPiece]) Then
+            'MsgBox ![chesspieces_chesspiece] & " ID:" & ![pieceid] & " Top:" & ![postop] & " Left:" & ![posleft]
+            boxName = ![ChessPieces_ChessPiece]
+            'MsgBox boxName
+            boxTop = !postop
+            'MsgBox boxTop
+            boxLeft = !posleft
+            'MsgBox boxLeft
+                    Me(boxName).Top = boxTop
+                    Me(boxName).Left = boxLeft
+             
+            End If
+        .MoveNext
+    Loop
+    .Close
+End With
+Set rstcategories = Nothing
+db.Close
+Set db = Nothing
+'Form_Game.Refresh
+    'BlackScore = DSum("[relativestrength]", "BPiecesStrengthValues")
+    'WhiteScore = DSum("[relativestrength]", "WPiecesStrengthValues")
+    'BSquares = DCount("*", "AllBlacksquares")
+    'WSquares = DCount("*", "AllWhitesquares")
+End Sub
+
+Private Sub Cleanboard_Click()
+Boardrefresh
+End Sub
+
+Private Sub Command222_Click()
+Dim db As DAO.Database
+Dim boxName As String
+Dim boxTop As Double
+Dim boxLeft As Double
+Set db = CurrentDb
+Set rstWPs = db.OpenRecordset("BPAllLegalMovesandLocations", dbOpenDynaset)
+With rstWPs
+    Do While Not .EOF
+                    If Not IsNull(![LocationObject]) Then Me(![LocationObject]).BackColor = RGB(0, 255, 0)
+        .MoveNext
+    Loop
+    .Close
+End With
+Set rstWPs = Nothing
+db.Close
+Set db = Nothing
+'MsgBox "All Possible Positions for Black Pawns"
+End Sub
+
+Private Sub BlackCapturingColored_Click()
+Dim db As DAO.Database
+Dim boxName As String
+Dim boxTop As Double
+Dim boxLeft As Double
+Set db = CurrentDb
+Set rstWPs = db.OpenRecordset("AllBlackCapturingPossibilities", dbOpenDynaset)
+With rstWPs
+    Do While Not .EOF
+                    If Not IsNull(![newlocation]) Then Me(![newlocation]).BackColor = RGB(255, 0, 0)
+        .MoveNext
+    Loop
+    .Close
+End With
+Set rstWPs = Nothing
+db.Close
+Set db = Nothing
+'MsgBox "All Possible Captures for Black"
+End Sub
+
+Private Sub Command227_Click()
+Dim db As DAO.Database
+Dim boxName As String
+Dim boxTop As Double
+Dim boxLeft As Double
+Set db = CurrentDb
+Set rstKnights = db.OpenRecordset("NLegalMovesAndLocations", dbOpenDynaset)
+With rstKnights
+    Do While Not .EOF
+                    If Not IsNull(![LocationObject]) Then Me(![LocationObject]).BackColor = RGB(255, 255, 0)
+        .MoveNext
+    Loop
+    .Close
+End With
+Set rstKnights = Nothing
+db.Close
+Set db = Nothing
+'MsgBox "All Possible Positions for Knights"
+End Sub
+
+Private Sub Command354_Click()
+For a = 1 To 100
+playersTurn = 2
+CPUvsCPUroutine
+playersTurn = 1
+CPUvsCPUroutine
+Next a
+End Sub
+
+Private Sub Command376_Click()
+Dim db As DAO.Database
+Dim boxName As String
+Dim boxTop As Double
+Dim boxLeft As Double
+Set db = CurrentDb
+Set rstKnights = db.OpenRecordset("checkmatewhiteking", dbOpenDynaset)
+With rstKnights
+    Do While Not .EOF
+                    If Not IsNull(![LocationObject]) Then Me(![LocationObject]).BackColor = RGB(255, 255, 0)
+        .MoveNext
+    Loop
+    .Close
+End With
+Set rstKnights = Nothing
+db.Close
+Set db = Nothing
+End Sub
+
+Private Sub Command377_Click()
+Dim db As DAO.Database
+Dim boxName As String
+Dim boxTop As Double
+Dim boxLeft As Double
+Set db = CurrentDb
+Set rstKnights = db.OpenRecordset("checkmateblackking", dbOpenDynaset)
+With rstKnights
+    Do While Not .EOF
+                    If Not IsNull(![LocationObject]) Then Me(![LocationObject]).BackColor = RGB(255, 255, 0)
+        .MoveNext
+    Loop
+    .Close
+End With
+Set rstKnights = Nothing
+db.Close
+Set db = Nothing
+End Sub
+
+
+
+Private Sub CPUvsCPU_Click()
+'WhitePLayFirst
+For z = 1 To 100
+playersTurn = 1
+CPUvsCPUroutine
+playersTurn = 2
+CPUvsCPUroutine
+Next
+End Sub
+
+Private Sub WhiteCapturingColored_Click()
+Dim db As DAO.Database
+Dim boxName As String
+Dim boxTop As Double
+Dim boxLeft As Double
+Set db = CurrentDb
+Set rstWPs = db.OpenRecordset("AllWhiteCapturingPossibilities", dbOpenDynaset)
+With rstWPs
+    Do While Not .EOF
+                    If Not IsNull(![newlocation]) Then Me(![newlocation]).BackColor = RGB(255, 255, 0)
+        .MoveNext
+    Loop
+    .Close
+End With
+Set rstWPs = Nothing
+db.Close
+Set db = Nothing
+'MsgBox "White Capturing Black Pieces"
+End Sub
+
+Private Sub Command228_Click()
+Dim db As DAO.Database
+Dim boxName As String
+Dim boxTop As Double
+Dim boxLeft As Double
+Set db = CurrentDb
+Set rstWPs = db.OpenRecordset("WPALLMOVES", dbOpenDynaset)
+With rstWPs
+    Do While Not .EOF
+                    If Not IsNull(![newlocation]) Then Me(![newlocation]).BackColor = RGB(255, 255, 0)
+        .MoveNext
+    Loop
+    .Close
+End With
+Set rstWPs = Nothing
+db.Close
+Set db = Nothing
+'MsgBox "All Possible Positions for White Pawns"
+End Sub
+
+Private Sub Command229_Click()
+Dim db As DAO.Database
+Dim boxName As String
+Dim boxTop As Double
+Dim boxLeft As Double
+Set db = CurrentDb
+Set rstWhiteKnights = db.OpenRecordset("WNALLMOVES", dbOpenDynaset)
+With rstWhiteKnights
+    Do While Not .EOF
+                    If Not IsNull(![newlocation]) Then Me(![newlocation]).BackColor = RGB(255, 255, 0)
+        .MoveNext
+    Loop
+    .Close
+End With
+Set rstWhiteKnights = Nothing
+db.Close
+Set db = Nothing
+'MsgBox "All Possible Positions for White Knights"
+End Sub
+
+Private Sub Command230_Click()
+Dim db As DAO.Database
+Dim boxName As String
+Dim boxTop As Double
+Dim boxLeft As Double
+Set db = CurrentDb
+Set rstWhiteBishops = db.OpenRecordset("WBALLMOVES", dbOpenDynaset)
+With rstWhiteBishops
+    Do While Not .EOF
+                    If Not IsNull(![newlocation]) Then Me(![newlocation]).BackColor = RGB(255, 255, 0)
+        .MoveNext
+    Loop
+    .Close
+End With
+Set rstWhiteBishops = Nothing
+db.Close
+Set db = Nothing
+'MsgBox "All Possible Positions for White Bishops"
+End Sub
+
+Private Sub Command231_Click()
+Dim db As DAO.Database
+Dim boxName As String
+Dim boxTop As Double
+Dim boxLeft As Double
+Set db = CurrentDb
+Set rstWhiteQueen = db.OpenRecordset("WQUEENALLMOVES", dbOpenDynaset)
+With rstWhiteQueen
+    Do While Not .EOF
+                    If Not IsNull(![newlocation]) Then Me(![newlocation]).BackColor = RGB(255, 255, 0)
+        .MoveNext
+    Loop
+    .Close
+End With
+Set rstWhiteQueen = Nothing
+db.Close
+Set db = Nothing
+'MsgBox "All Possible Positions for White Queen"
+End Sub
+
+Private Sub Command232_Click()
+Dim db As DAO.Database
+Dim boxName As String
+Dim boxTop As Double
+Dim boxLeft As Double
+Set db = CurrentDb
+Set rstWhiteKing = db.OpenRecordset("WKINGALLMOVES", dbOpenDynaset)
+    With rstWhiteKing
+    Do While Not .EOF
+                    If Not IsNull(![newlocation]) Then Me(![newlocation]).BackColor = RGB(255, 255, 0)
+        .MoveNext
+    Loop
+    .Close
+End With
+Set rstWhiteKing = Nothing
+db.Close
+Set db = Nothing
+'MsgBox "All Possible Positions for White King"
+End Sub
+
+Private Sub Command233_Click()
+Dim db As DAO.Database
+Dim boxName As String
+Dim boxTop As Double
+Dim boxLeft As Double
+Set db = CurrentDb
+Set rstWhiteRooks = db.OpenRecordset("WRALLMOVES", dbOpenDynaset)
+With rstWhiteRooks
+    Do While Not .EOF
+                    If Not IsNull(![newlocation]) Then Me(![newlocation]).BackColor = RGB(255, 255, 0)
+        .MoveNext
+    Loop
+    .Close
+End With
+Set rstWhiteRooks = Nothing
+db.Close
+Set db = Nothing
+'MsgBox "All Possible Positions for White Rooks"
+End Sub
+
+
+Private Sub Command234_Click()
+Dim db As DAO.Database
+Dim boxName As String
+Dim boxTop As Double
+Dim boxLeft As Double
+Set db = CurrentDb
+Set rstBKnights = db.OpenRecordset("BNALLMOVES", dbOpenDynaset)
+With rstBKnights
+    Do While Not .EOF
+                    If Not IsNull(![newlocation]) Then Me(![newlocation]).BackColor = RGB(0, 255, 0)
+        .MoveNext
+    Loop
+    .Close
+End With
+Set rstBKnights = Nothing
+db.Close
+Set db = Nothing
+'MsgBox "All Possible Positions for Black Knights"
+End Sub
+
+Private Sub Command235_Click()
+Dim db As DAO.Database
+Dim boxName As String
+Dim boxTop As Double
+Dim boxLeft As Double
+Set db = CurrentDb
+Set rstWhiteBishops = db.OpenRecordset("BBALLMOVES", dbOpenDynaset)
+With rstWhiteBishops
+    Do While Not .EOF
+                    If Not IsNull(![newlocation]) Then Me(![newlocation]).BackColor = RGB(0, 255, 0)
+        .MoveNext
+    Loop
+    .Close
+End With
+Set rstWhiteBishops = Nothing
+db.Close
+Set db = Nothing
+'MsgBox "All Possible Positions for Black Bishops"
+End Sub
+
+Private Sub Command236_Click()
+Dim db As DAO.Database
+Dim boxName As String
+Dim boxTop As Double
+Dim boxLeft As Double
+Set db = CurrentDb
+Set rstWhiteQueen = db.OpenRecordset("BQUEENALLMOVES", dbOpenDynaset)
+With rstWhiteQueen
+    Do While Not .EOF
+                    If Not IsNull(![newlocation]) Then Me(![newlocation]).BackColor = RGB(0, 255, 0)
+        .MoveNext
+    Loop
+    .Close
+End With
+Set rstWhiteQueen = Nothing
+db.Close
+Set db = Nothing
+'MsgBox "All Possible Positions for Black Queen"
+End Sub
+
+Private Sub Command237_Click()
+Dim db As DAO.Database
+Dim boxName As String
+Dim boxTop As Double
+Dim boxLeft As Double
+Set db = CurrentDb
+Set rstWhiteKing = db.OpenRecordset("BKINGALLMOVES", dbOpenDynaset)
+With rstWhiteKing
+    Do While Not .EOF
+                    If Not IsNull(![newlocation]) Then Me(![newlocation]).BackColor = RGB(0, 255, 0)
+        .MoveNext
+    Loop
+    .Close
+End With
+Set rstWhiteKing = Nothing
+db.Close
+Set db = Nothing
+'MsgBox "All Possible Positions for White King"
+End Sub
+
+Private Sub Command238_Click() ' BR ALL MOVES
+Dim db As DAO.Database
+Dim boxName As String
+Dim boxTop As Double
+Dim boxLeft As Double
+Set db = CurrentDb
+Set rstBlackRooks = db.OpenRecordset("BRALLMOVES", dbOpenDynaset)
+With rstBlackRooks
+    Do While Not .EOF
+                    If Not IsNull(![newlocation]) Then Me(![newlocation]).BackColor = RGB(0, 255, 0)
+        .MoveNext
+    Loop
+    .Close
+End With
+Set rstBlackRooks = Nothing
+db.Close
+Set db = Nothing
+'MsgBox "All Possible Positions for Black Rooks"
+End Sub
+
+Private Sub Command282_Click()
+Dim db As DAO.Database
+Dim boxName As String
+Dim boxTop As Double
+Dim boxLeft As Double
+Set db = CurrentDb
+Set rstWPs = db.OpenRecordset("BPAllMoves", dbOpenDynaset)
+With rstWPs
+    Do While Not .EOF
+                    If Not IsNull(![newlocation]) Then Me(![newlocation]).BackColor = RGB(0, 255, 0)
+        .MoveNext
+    Loop
+    .Close
+End With
+Set rstWPs = Nothing
+db.Close
+Set db = Nothing
+'MsgBox "All Possible Positions for Black Pawns"
+End Sub
+
+Private Sub Command283_Click()
+Dim db As DAO.Database
+Dim boxName As String
+Dim boxTop As Double
+Dim boxLeft As Double
+Set db = CurrentDb
+Set rstRooksandQueens = db.OpenRecordset("RQAllMoves", dbOpenDynaset)
+With rstRooksandQueens
+    Do While Not .EOF
+                    If Not IsNull(![newlocation]) Then Me(![newlocation]).BackColor = RGB(255, 255, 0)
+        .MoveNext
+    Loop
+    .Close
+End With
+Set rstRooksandQueens = Nothing
+db.Close
+Set db = Nothing
+'MsgBox "All Possible Positions for Rooks and Horiz for Queens"
+End Sub
+
+Private Sub Command284_Click() ' BLACK QUEEN ALL MOVES
+' Many errors found on 1/1/2023
+Dim db As DAO.Database
+Dim boxName As String
+Dim boxTop As Double
+Dim boxLeft As Double
+Set db = CurrentDb
+Set rstRooksandQueens = db.OpenRecordset("BQAllMoves", dbOpenDynaset)
+With rstRooksandQueens
+    Do While Not .EOF
+                    If Not IsNull(![newlocation]) Then Me(![newlocation]).BackColor = RGB(255, 255, 0)
+        .MoveNext
+    Loop
+    .Close
+End With
+Set rstRooksandQueens = Nothing
+db.Close
+Set db = Nothing
+'MsgBox "All Possible Positions for Black Queen(s)"
+End Sub
+
+
+
+Private Sub PlaySequence_Click()
+'PLAY SEQUENCE OF MOVES
+'open query moves corresponding to current game
+Dim db As DAO.Database
+Dim boxName As String
+Dim boxTop As Double
+Dim boxLeft As Double
+Set db = CurrentDb
+Set rstReadFromMoves = db.OpenRecordset("Moves", dbOpenDynaset)
+With rstReadFromMoves
+Do While Not .EOF
+    If ![movesGameID] = Me.GameID Then
+                    xy1 = ![PosA]
+                    xy2 = ![PosB]
+                    updateboardPos1sub
+                    .Edit
+                    If CurrMovingPiece < 8 And ![MovePiece] = Null Then ![MovePiece] = CurrMovingPiece
+                    If CurrMovingPiece > 16 And CurrMovingPiece < 26 And ![MovePiece] = Null Then ![MovePiece] = CurrMovingPiece
+                    If CurrMovingPiece = 34 And ![MovePiece] = Null Then ![MovePiece] = CurrMovingPiece
+            
+                     .Update
+                    updateboardPos2sub
+                    Pause (1)
+                End If
+    .MoveNext
+ Loop
+    .Close
+End With
+Set rstReadFromMoves = Nothing
+db.Close
+Set db = Nothing
+fromClick = False
+Me.Refresh
+End Sub
+
+Private Sub Command264_Click()
+Dim db As DAO.Database
+Dim boxName As String
+Dim boxTop As Double
+Dim boxLeft As Double
+Set db = CurrentDb
+Set rstwhite = db.OpenRecordset("ALLWHITEMOVES", dbOpenDynaset)
+With rstwhite
+    Do While Not .EOF
+                    If Not IsNull(![newlocation]) Then Me(![newlocation]).BackColor = RGB(255, 255, 0)
+        .MoveNext
+    Loop
+    .Close
+End With
+Set rstwhite = Nothing
+db.Close
+Set db = Nothing
+'MsgBox "All Possible Positions for White Pieces"
+End Sub
+
+Private Sub Command265_Click()
+Dim db As DAO.Database
+Dim boxName As String
+Dim boxTop As Double
+Dim boxLeft As Double
+Set db = CurrentDb
+Set rstblack = db.OpenRecordset("ALLBLACKMOVES", dbOpenDynaset)
+With rstblack
+    Do While Not .EOF
+                    If Not IsNull(![newlocation]) Then Me(![newlocation]).BackColor = RGB(0, 255, 0)
+        .MoveNext
+    Loop
+    .Close
+End With
+Set rstblack = Nothing
+db.Close
+Set db = Nothing
+'MsgBox "All Possible Positions for Black Pieces"
+End Sub
+
+Private Sub Command266_Click()
+Dim db As DAO.Database
+Dim boxName As String
+Dim boxTop As Double
+Dim boxLeft As Double
+Set db = CurrentDb
+Set rstwhite = db.OpenRecordset("WhiteAllCoveredPieces", dbOpenDynaset)
+With rstwhite
+    Do While Not .EOF
+                    If Not IsNull(![newlocation]) Then Me(![newlocation]).BackColor = RGB(255, 255, 0)
+        .MoveNext
+    Loop
+    .Close
+End With
+Set rstwhite = Nothing
+db.Close
+Set db = Nothing
+'MsgBox "All White Protected Pieces"
+End Sub
+
+Private Sub Command267_Click()
+Dim db As DAO.Database
+Dim boxName As String
+Dim boxTop As Double
+Dim boxLeft As Double
+Set db = CurrentDb
+Set rstblack = db.OpenRecordset("BlackAllCoveredPieces", dbOpenDynaset)
+With rstblack
+    Do While Not .EOF
+                    If Not IsNull(![newlocation]) Then Me(![newlocation]).BackColor = RGB(0, 0, 255)
+        .MoveNext
+    Loop
+    .Close
+End With
+Set rstblack = Nothing
+db.Close
+Set db = Nothing
+'MsgBox "All Black Protected Pieces"
+End Sub
+
+Private Sub Command268_Click()
+Dim db As DAO.Database
+Dim boxName As String
+Dim boxTop As Double
+Dim boxLeft As Double
+Set db = CurrentDb
+Set rstwhite = db.OpenRecordset("AllWhiteUncoveredPieces", dbOpenDynaset)
+With rstwhite
+    Do While Not .EOF
+                    If Not IsNull(![unCovered]) Then Me(![unCovered]).BackColor = RGB(255, 255, 0)
+        .MoveNext
+    Loop
+    .Close
+End With
+Set rstwhite = Nothing
+db.Close
+Set db = Nothing
+'MsgBox "All White UNProtected Pieces"
+End Sub
+
+Private Sub Command269_Click()
+Dim db As DAO.Database
+Dim boxName As String
+Dim boxTop As Double
+Dim boxLeft As Double
+Set db = CurrentDb
+Set rstblack = db.OpenRecordset("BlackAllUnCovered", dbOpenDynaset)
+With rstblack
+    Do While Not .EOF
+                    If Not IsNull(![unCovered]) Then Me(![unCovered]).BackColor = RGB(255, 0, 0)
+        .MoveNext
+    Loop
+    .Close
+End With
+Set rstblack = Nothing
+db.Close
+Set db = Nothing
+'MsgBox "All Black Unprotected Pieces"
+End Sub
+
+Private Sub Command270_Click()
+Dim db As DAO.Database
+Dim boxName As String
+Dim boxTop As Double
+Dim boxLeft As Double
+Set db = CurrentDb
+Set rstwhite = db.OpenRecordset("AllWhiteSquares", dbOpenDynaset)
+With rstwhite
+    Do While Not .EOF
+                    If Not IsNull(![newlocation]) Then Me(![newlocation]).BackColor = RGB(255, 255, 0)
+        .MoveNext
+    Loop
+    'MsgBox "White Covering :" & .RecordCount & " Squares"
+    WSquares = .RecordCount
+    .Close
+End With
+Set rstwhite = Nothing
+db.Close
+Set db = Nothing
+Pause (3)
+'MsgBox "All WhiteProtected Squares"
+End Sub
+
+Private Sub Command271_Click()
+Dim db As DAO.Database
+Dim boxName As String
+Dim boxTop As Double
+Dim boxLeft As Double
+Set db = CurrentDb
+Set rstblack = db.OpenRecordset("AllBlackSquares", dbOpenDynaset)
+With rstblack
+    Do While Not .EOF
+                    If Not IsNull(![newlocation]) Then Me(![newlocation]).BackColor = RGB(0, 0, 255)
+        .MoveNext
+    Loop
+    'MsgBox "Black Covering :" & .RecordCount & " Squares"
+    BSquares = .RecordCount
+    .Close
+End With
+Set rstblack = Nothing
+db.Close
+Set db = Nothing
+Pause (2)
+'MsgBox "All Black Protected Squares"
+End Sub
+Private Sub Command281_Click()
+For a = 1 To 100
+WHITELOGIC
+BLACKLOGIC
+Next a
+End Sub
+
+Private Sub d5_Click()
+If fromClick = False Then Exit Sub
+x2 = 4
+y2 = 5
+ToClickProcess
+End Sub
+
+Private Sub Form_Load()
+'Color Choices :
+'Black: RGB(0,0,0)
+'White: RGB(255,255,255)
+'Red: RGB(255,0,0)
+'Green: RGB(0,255,0)
+'Blue: RGB(0,0,255)
+'Yellow: RGB(255,255,0)
+'Magenta: RGB(255,0,255)
+'Cyan: RGB(0,255,255)
+fromClick = False
+toClick = False
+Thinking = False
+Pause (1)
+PutAllPiecesAside
+Boardrefresh
+
+End Sub
+
+
+Private Sub WB2_Click()
+CurrMovingPiece = 6
+Beep
+'If fromClick = False Then FromClickProcess
+'If fromClick = True Then ToClickProcess
+End Sub
+
+Private Sub updateboardPos1sub()
+Dim db As DAO.Database
+Dim boxName As String
+Dim boxTop As Double
+Dim boxLeft As Double
+Set db = CurrentDb
+Set rstUpdBoard = db.OpenRecordset("GamePlayBoardCondition", dbOpenDynaset)
+With rstUpdBoard
+            Do While Not .EOF
+             If xy1 = ![LocationObject] Then
+             'If x1 = ![gprank] And y1 = ![gpfile] Then
+                    'MsgBox "Found Pos1"
+                    'MsgBox "CurrMovingPiece=" & ![ChessPiece]
+                    If Not IsNull(![Chesspiece]) Then CurrMovingPiece = ![Chesspiece]
+                    .Edit
+                    ![Chesspiece] = Null
+                    .Update
+              End If
+            .MoveNext
+            Loop
+    .Close
+End With
+Set rstappendmove = Nothing
+db.Close
+Set db = Nothing
+fromClick = False
+End Sub
+Private Sub updateboardPos2sub()
+Dim db As DAO.Database
+Dim boxName As String
+Dim boxTop As Double
+Dim boxLeft As Double
+Set db = CurrentDb
+Set rstUpdBoard = db.OpenRecordset("GamePlayBoardCondition", dbOpenDynaset)
+With rstUpdBoard
+            Do While Not .EOF
+              If xy2 = ![LocationObject] Then
+                 If Not IsNull(![Chesspiece]) Then
+                                    'MsgBox "not an empty spot"
+                                    ExistingPID = ![Chesspiece]
+                                    CheckForAnotherP
+                              End If
+                'MsgBox "Found Pos2"
+                .Edit
+                'MsgBox "Moving Piece to new Pos:" & CurrMovingPiece
+                ![Chesspiece] = CurrMovingPiece
+                .Update
+              End If
+                     .MoveNext
+            Loop
+    .Close
+End With
+Set rstappendmove = Nothing
+db.Close
+Set db = Nothing
+fromClick = False
+If Thinking = False Then Boardrefresh
+End Sub
+Private Sub CheckForAnotherP()
+Set db = CurrentDb
+Set rstPiecs = db.OpenRecordset("ChessPieces", dbOpenDynaset)
+With rstPiecs
+Do While Not .EOF
+ If ![PieceID] = ExistingPID And Thinking = False Then
+         ExistingP = ![Chesspiece]
+         'MsgBox "Piece :" & ExistingPiece & " will be removed"
+        RemoveExistingP
+        End If
+ .MoveNext
+Loop
+     .Close
+End With
+Set rstPiecs = Nothing
+db.Close
+Set db = Nothing
+End Sub
+
+Private Sub RemoveExistingP()
+'MsgBox ExistingP
+'MsgBox "Piece out of board"
+                 Me(ExistingP).Top = 200
+                 Me(ExistingP).Left = 11000 + (ExistingPID * 200)
+                 Me.Recalc
+End Sub
+
+Private Sub PutAllPiecesAside()
+Dim db As DAO.Database
+
+Set db = CurrentDb
+Set rstpieces = db.OpenRecordset("CHESSPIECES", dbOpenDynaset)
+With rstpieces
+    Do While Not .EOF
+                  Me(![Chesspiece]).Top = 100
+                 Me(![Chesspiece]).Left = 11000 + (![PieceID] * 200)
+                 Me.Recalc
+        .MoveNext
+    Loop
+    .Close
+End With
+Set rstWhiteBishops = Nothing
+db.Close
+Set db = Nothing
+'MsgBox "All Possible Positions for Black Bishops"
+End Sub
+'
+' Note : En Passant move of Pawns has not been programmed yet, Promotion and UnderPromotion of Pawns have not been programmed yet
+'
+'RANDOM SELECTION OF OPENING IF CPU IS PLAYING WITH WHITE
+'
+'    The four best chess opening moves for White are 1.e4, 1.d4, 1.c4 and 1.Nf3
+'    The best chess openings after 1.e4 are the Ruy Lopez, the Italian game , the Sicilian Defense, the French Defense, and the Caro Kann.
+'    The best chess openings after 1.d4 are the Queen’s Gambit, the King’s Indian Defense, the Slav Defense, the Grunfeld Defense, and the Nimzo Indian Defense.
+'    The move 1.c4 leads to the English Opening – one of the best chess openings for White.
+'    The move 1.Nf3 leads to the Reti Openings – a strong chess opening for White.
+'
+'IF CPU PLAYS WITH BLACK THEN SELECT OPENING ACCORDING TO WHITE OPPONENT'S FIRST MOVE
+'    The 5 best chess opening moves for Black are 1…e5, 1…d5, 1…c5, 1…e6, and 1…Nf6.
+'    The best chess openings for Black with 1…e5 are the Italian Game, The Scotch Game, the Petroff Defense, and the Ruy Lopez (Spanish Opening).
+'    The best chess openings for Black with 1…d5 are the Queen’s Gambit Accepted, Queen’s Gambit Declined, and the Slav Defense.
+'    The best chess opening for Black with 1…c5 is the Sicilian Defense. Here there are many options to choose from such as the Sicilian Dragon, Sicilian Najdorf, Sicilian Taimanov, and more.
+'    The best chess opening for Black with 1…e6 is the French Defense.
+'    The best chess openings for Black with 1…Nf6 are the King’s Indian Defense, Bogo-Indian, Nimzo-Indian, Queen’s Indian, and Grunfeld Defense.
+' https://www.ichess.net/blog/5-best-chess-openings-black/
+'SET PLAN TO 'OPENING MODE'
+'GOTO MAIN CHECK
+
+' OPENING MODE
+' - AIM FOR EFFECTIVE PAWN FORMATION (PLAN: PAWNFORMATION)
+' - AIM THE CENTER FOR RAPID PIECE DEVELOPMENT (PLAN: GAINSPACE)
+' - REPEAT MAIN CHECK AND RESUME
+' - DON'T REPELL FOR NO GOOD REASONS
+' - DON'T MOVE PIECE TWICE FOR NO GOOD REASONS
+'
+' M A I N    C H E C K I N G   E N G I N E
+' - CHECK FOR VULNERABILITIES TO OPP TEAM
+'                   - UNPROTECTED (HANGING) OPP TEAM PIECES
+'                           - CONSIDER CHANGING PLAN TO 'MIDDLE GAME' AND ATTACK OR STAY TO 'OPENING' IF NOT DEVELOPED SATISFACTORILY
+'                   - FAST CHECKMATES OR SMOTHERED MATES TO OPP TEAM
+'                           - IF SO, CHANGE PLAN TO 'ATTACKFORFASTMATE' OR 'ATTACKFORSMOTHEREDMATE'
+' - CHECK AND AVOID VULNERABILITIES TO OWN TEAM
+'                   - UNPROTECTED PIECES
+'                           - IF SO CHANGE PLAN TO 'DEFENSE'
+'                   - FAST CHECKMATES OR FEAR OF SMOTHERED MATES TO OWN TEAM
+'                           - IF SO CHANGE PLAN TO 'DEFENSE'
+' - CHECK FOR POTENTIAL OF USING TACTICS AND TRY IT (IF THERE IS NO MOVE OF HIGHER IMPORTANCE)
+'                 - CHECK AND AVOID OPP USE OF TACTICS AND AVOID IT (IF THERE IS NO MOVE OF HIGHER IMPORTANCE)
+' - CHECK FOR POSSIBILITY OF FORCED MOVES AND/OR DEFLECTIONS+DECOYS THAT END IN MATERIAL GAIN
+'                 - CHECK AND AVOID POSSIBILITY OF OPP FORCED MOVES OR DEFLECTIONS+DECOYS
+' - IF NONE OF THE ABOVE THEN STICK TO PLAN
+'
+' MIDDLE GAME
+' EARLY CASTLING ON FIRT OPPORTUNITY
+' PAWN SKELETON TRANSFORMATION BUT REMEMBER THAT PAWN MOVES ALWAYS CREATE WEAKNESSES
+' DECIDE BALANCE BETWEEN DEFENSE AND ATTACK
+'     - ASSESS SCORE AND LOST PIECES
+'     - ASSESS OCCUPATION OF CENTER AND SPACE GAIN
+' CHANGE PLAN TO ATTACK
+' CHANGE PLAN TO DEFENSE
+'
+'
+' ENDGAME
+' SIMPLE (WITHOUT PAWNS) OR COMPLEX
+' DETECT ENDGAME ADVANTAGE BY USING PATTERNS FROM PREVIOUS GAMES AND ENDGAME LIBRARY (CHANGE PLAN TO 'WINENDGAME')
+'        - IF DETECTED ENGAGE TO ENDGAME MOVES UNLESS OPPONENT'S DEFENSE CHANGES PATTERN SIGNIFICANTLY
+' DETECT ENDGAME DISADVANTAGE AND TRY TO AVOID IT - PLAN: 'DEFENSE MODE'
+'
+'
+' DEFENSE MODE
+' IN THE FOLLOWING ORDER
+' FIND BEST DEFENSIVE MOVE TO SAVE KING
+' FIND BEST DEFENSIVE MOVE TO SAVE QUEEN OR ASSESS QUEEN EXCHANGE ADVANTAGE / SACRIFICE
+' FIND BEST DEFENSIVE MOVE FOR ANY TACTIC FROM OPP (FORKS, PINS, PILINGUP, SKEWERS)
+' AVOID BAD TRADES
+' FIND BEST DEFENSIVE MOVE FOR AVOIDING MATERIAL LOSS
+' FIND BEST DEFENSIVE MOVE FOR AVOIDING CHANGE OF PLAN
+' ANY ADVANTAGE OF DESPERADO TACTIC?
+'
+' ATTACK MODE
+'   FIND BEST ATTACK MOVE ACCORDING TO PLAN
+'   FORCE STYLE - ACTIVE PLAY
+'   CAN YOU PLAN A DISCOVERED ATTACK?
+'   FIND THE DEFENDER AND PREPARE ATTACK TO IT
+'   ATTACK FOR FASTMATE
+'   CAPTURE VULNERABLE PIECE OF VALUE BUT CHECK IF IT IS A BLUFF
+'           OR WHETHER U NEED TO PERFORM ANOTHER CRUCIAL MOVE IN BETWEEN (ZWISCHENZUG)
+'
+' SELECTION OF PLAN
+'
+' SELECTION OF PLAN CAMOUFLAGE
+' -----------------------------------------------------------------------------------------------------------------------------------------
+' CPU LOGIC PHILOSOPHY (2023)
+'
+' CPU LOGIC is based on a scoring system based on seven factors plus attitude of playing towards  those factors :
+' 1) Total power - number of squares covered, by Black. Record Total power in new position (this one is important, not the current power)
+' 2) Inherent value og playing piece
+' 3) possible opportunities to capture from current position (target pieces)
+' 4) possible threats in current state
+' 5) exclude moving to a threatened position (sacrifice?)
+'
+' 6) possible threats in new state
+' 7) possible opportunities in new state
+' 8) (NEXT LEVEL) based on memory of previous games (scans for patterns from database of games)
+' 9) (NEXT LEVEL) according to a plan of moves to build tactics (forks, pins...)
+' 10) (NEXT LEVEL) avoid giving the opportunity of tactics to the opponent (pins, forks, protections)
+' 11) (NEXT LEVEL) according to a plan of moves aiming to attack opponent's Queen
+' 12) (NEXT LEVEL) avoid a set of moves aiming to attack your own Queen
+' 13) (NEXT LEVEL) according to a plan of moves aiming to attack opponent's King
+' 14) (NEXT LEVEL) avoid a set of moves aiming to attack your own King
+'
+' ATTITUDE VARIABLES
+'
+' 1) How easily would you move a piece of value ? [MovingPieceofValue]
+' 2) Total area of coverage for black and white at the moment. what's their difference ?
+'    What's the total area of coverage difference in new position ?
+' 3) Through ALLBLCAPTPOSSIB Query enlist all possible attacks from current position.
+'    How easily would you attack an opponent's piece? [CapturingAggressiveness]
+' 4) Through ALLWHCAPTPOSSIB Query enlist all possible threats in current position.
+'    How easily would you sacrifice a piece? [Reaction to threatened piece]
+' 5) Identify threat in moving position and assess sacrifice tolerance
+' 6) After playing the tested move run again ALLBLCAPTPOSSIB and assess opportunities in next step
+'    What's your attitude towards seeking opportunities in next step?
+'
+' 7) After playing the tested move run again ALLBLCAPTPOSSIB and assess threats in next step
+'    What's your attitude towards precautions to avoid threats in next step?
+' 8) Check for patterns in database and decide how much that may influence you. Attitude towards memories of games?
+' 9) Check for patterns of tactics coming up for you in next moves (pins,forks, protections). What's your attitude?
+' 10) Check for patterns of tactics coming up for opponent in next moves. Attitude?
+' 11) Check quickest path of moves to attack the Queen (decide on attitude towards chasing opponent's Queen)
+' 12) Check for paths attacking your own Queen (decide on attitude towards losing your Queen)
+' 13) What's your attitude towards chasing opponent's King?
+' 14) What's your attitude towards defending your own King all the time?
+'
+' Calculated scores are recorded in POSSIBLE MOVES table and sorted from most favored ones to most unfavored
+' Most favored one is selected and executed
+'
+'
+Private Sub CPUvsCPUroutine()
+'
+' GAME VARIABLES
+'
+Dim db As DAO.Database
+Dim db1 As DAO.Database
+Dim db2 As DAO.Database
+Dim db3 As DAO.Database
+Dim dbs As DAO.Database
+Dim strField As String
+Dim curDatabase As Object
+Dim tblTest As Object
+Dim fldNew As Object
+Dim counter As Integer
+Dim recordvalues As String
+Dim pauseTime As Integer
+Dim PlayingPiece As Integer
+Dim TargetPiece As Integer
+Dim PieceStrength As Double
+Dim TargetPStrength As Double
+Dim Piecethreatened As Double
+Dim protectownpieces As Integer
+Dim targetPieceScore As Integer
+Dim threatenedKing As Integer
+Dim HighestScore As Integer
+Dim boxName As String
+Dim Remxy1 As String
+Dim StrategicCheckMate As Integer
+Dim captivePotential As Integer
+'
+counter = 0
+TargetPiece = 0
+targetPieceScore = 0
+PieceStrength = 0
+TargetPStrength = 0
+Piecethreatened = 0
+PossLostPStrength = 0
+Powerdifference = 0
+protectownpieces = 0
+threatenedKing = 0
+StrategicCheckMate = 0
+captivePotential = 0
+pauseTime = 1
+Readme.Caption = "CPU will now try to find optimal next move"
+Pause (pauseTime)
+PleaseWait.Visible = True
+'
+' Clean listboxes
+  If playersTurn = 2 Then GoTo emptyWlist
+        For i = WMovesCollection.ListCount - 1 To 0 Step -1
+            If playersTurn = 1 Then WMovesCollection.RemoveItem (i)
+        Next i
+emptyWlist:
+  If playersTurn = 1 Then GoTo skipemptyWlist
+        For j = BMovesCollection.ListCount - 1 To 0 Step -1
+            If playersTurn = 2 Then BMovesCollection.RemoveItem (i)
+        Next j
+skipemptyWlist:
+'Copies set of possible moves of black and white to 2 new tables for faster processing
+'
+'Readme.Caption = "Copying set of possible moves to new tables for faster processing"
+    If playersTurn = 1 Then DoCmd.RunSQL "SELECT * INTO [TEMPWHITEMOVES] FROM [ALLWHITEMOVES];"
+    If playersTurn = 1 Then DoCmd.RunSQL "SELECT * INTO [TEMPBLACKSQUARES] FROM [ALLBLACKSQUARES];"
+    If playersTurn = 2 Then DoCmd.RunSQL "SELECT * INTO [TEMPBLACKMOVES] FROM [ALLBLACKMOVES];"
+    If playersTurn = 2 Then DoCmd.RunSQL "SELECT * INTO [TEMPWHITESQUARES] FROM [ALLWHITESQUARES];"
+    'White state copied later in the code
+' Add new field for SCORING
+    Set curDatabase = CurrentDb
+        If playersTurn = 1 Then Set tblTest = curDatabase.TableDefs("TEMPWHITEMOVES")
+        If playersTurn = 2 Then Set tblTest = curDatabase.TableDefs("TEMPBLACKMOVES")
+    strField = "TotalScore"
+    Set fldNew = tblTest.CreateField(strField, dbDouble)
+    tblTest.Fields.Append fldNew
+'
+        If playersTurn = 1 Then threatenedKing = DCount("*", "threatenedwhiteking")
+        If playersTurn = 2 Then threatenedKing = DCount("*", "threatenedblackking")
+        If threatenedKing > 0 Then Readme.Caption = "Check !"
+    Pause (pauseTime)
+'
+'Open TEMPBLACKMOVES TABLE AND LOOP THROUGH ALL POSSIBLE MOVES OF BLACK
+'
+'Readme.Caption = "Opening TEMPBLACKMOVES TABLE AND CHECKS POSSIBLE MOVES ONE BY ONE"
+'Pause (pauseTime)
+Set db = CurrentDb
+If playersTurn = 1 Then Set rstReadFromTemp = db.OpenRecordset("TEMPWHITEMOVES", dbOpenDynaset)
+If playersTurn = 2 Then Set rstReadFromTemp = db.OpenRecordset("TEMPBLACKMOVES", dbOpenDynaset)
+'
+' LOOP OF THINKING PROCESS
+'
+With rstReadFromTemp
+Do While Not .EOF
+PleaseWait.Caption = .RecordCount - counter
+Pause (pauseTime)
+counter = counter + 1
+xy1 = ![LocationObject]
+'MsgBox xy1
+' CURRENT POSITION
+Remxy1 = xy1
+' SECOND POSITION (Board changes for both opponents)
+                    xy2 = ![newlocation]
+                    'MsgBox xy2
+                    ' NEXT POSITION
+                    CheckingMove.Visible = True
+                    CheckingMove.Caption = "Next Move: " & xy1 & "," & xy2
+                    PlayingPiece = ![Chesspiece]
+                    'MsgBox "PlayingPiece=" & PlayingPiece
+                    If Not IsNull(![Target]) Then TargetPiece = ![Target]
+                    Thinking = True
+                    'PLAY THE ACTUAL MOVE TO CHANGE TABLE STATE
+                    updateboardPos1sub
+                    updateboardPos2sub
+                    'Boardrefresh
+                    'Readme.Caption = "Testing Move: " & xy1 & " to " & xy2
+                    'Pause (pauseTime)
+                    'in case of a capture, captured piece should be returned to its place by the end of the loop
+' ASSESS DEFENDING CHECKMATE
+If playersTurn = 1 Then threatenedKing = DCount("*", "threatenedwhiteking")
+If playersTurn = 2 Then threatenedKing = DCount("*", "threatenedblackking")
+If threatenedKing > 0 Then
+                        Readme.Caption = "King is threatened!"
+                        Pause (pauseTime)
+                        threatenedKing = 900
+                        GoTo jumpattackstrategies
+                        End If
+Pause (pauseTime)
+'
+' CHECK if new position is of strategic importance for checkmate
+
+'StrategicCheckMate = DCount("*", "BlackSquaresforCheck")
+
+            Set db3 = CurrentDb
+            If playersTurn = 1 Then Set rststrateg = db3.OpenRecordset("WhiteSquaresforCheck", dbOpenDynaset)
+            If playersTurn = 2 Then Set rststrateg = db3.OpenRecordset("BlackSquaresforCheck", dbOpenDynaset)
+            With rststrateg
+             Do While Not .EOF
+                        'MsgBox xy2 & " <> " & ![Loc]
+                        If xy2 = ![Loc] Then
+                        Readme.Caption = "Check is possible from " & xy2
+                        'DoCmd.OpenQuery ("BlacksquaresforCheck")
+                        Pause (pauseTime)
+                        StrategicCheckMate = 900
+                        End If
+                  .MoveNext
+             Loop
+            End With
+            Readme.Caption = ""
+            
+jumpattackstrategies:
+' ASSESS POWER OF EACH OPPONENT IN CURRENT AND FUTURE POSITIONS (Factor 1)
+'
+                    'BlackScore = DSum("[relativestrength]", "_BPiecesStrengthValues")
+                    'WhiteScore = DSum("[relativestrength]", "WPiecesStrengthValues")
+                    'DoCmd.OpenQuery ("ALLBLACKSQUARES")
+                     If playersTurn = 1 Then Squares = DCount("*", "ALLWHITESQUARES") * [ImperialisticDrive] ' RECORDS NEW COVER AREA(ALL POSSIBLE POSITIONS) OF WHITE
+                     If playersTurn = 2 Then Squares = DCount("*", "ALLBLACKSQUARES") * [ImperialisticDrive] ' RECORDS NEW COVER AREA(ALL POSSIBLE POSITIONS) OF BLACK
+                     Readme.Caption = "Square Coverage: " & Squares
+                     Pause (pauseTime)
+                     '
+                     If playersTurn = 1 Then captivePotential = DCount("*", "AllWhiteCapturingPossibilities") * [moveandthreat]
+                     If playersTurn = 2 Then captivePotential = DCount("*", "AllBlackCapturingPossibilities") * [moveandthreat]
+                     Readme.Caption = "Capturing Potential: " & captivePotential
+                     Pause (pauseTime)
+                     'WhiteCapturingColored_Click
+                     'BlackCapturingColored_Click
+                     If Not IsNull(DSum("[RelativeStrength]", "AllwhiteCapturingPossibilities")) And playersTurn = 1 Then targetPieceScore = DSum("[RelativeStrength]", "AllwhiteCapturingPossibilities") * [moveandthreat] ' RECORDS VALUE OF THREATENED PIECES
+                     If Not IsNull(DSum("[RelativeStrength]", "AllblackCapturingPossibilities")) And playersTurn = 2 Then targetPieceScore = DSum("[RelativeStrength]", "AllblackCapturingPossibilities") * [moveandthreat] ' RECORDS VALUE OF THREATENED PIECES
+                     Readme.Caption = "Target Piece Score: " & targetPieceScore
+                     Pause (pauseTime)
+                     'Boardrefresh
+                     If playersTurn = 1 Then protectownpieces = DCount("*", "whiteAllCoveredPieces") * [PlaytoProtect]
+                     If playersTurn = 2 Then protectownpieces = DCount("*", "blackAllCoveredPieces") * [PlaytoProtect]
+                     Readme.Caption = "Protect Own Pieces: " & protectownpieces
+                     Pause (pauseTime)
+'                    using the difference doesnt make much sense, since there is a constant number of squares (increase in strength of one means decrease of the other)
+'
+'Find Values of playing and captured pieces
+                    Set db2 = CurrentDb
+                    Set rstPieceValues = db2.OpenRecordset("ChessPieces", dbOpenDynaset)
+                    With rstPieceValues
+                     Do While Not .EOF
+                        ' ASSESS VALUE OF CURRENT PLAYING PIECE
+                        ' MULTIPLY BY USER-DEFINED COFACTOR FOR ATTITUDE TOWARDS PLAYING THAT PIECE (Factor 2)
+                        If PlayingPiece = ![PieceID] Then
+                                                    'PieceStrength = ![RelativeStrength]
+                                                    PieceStrength = ![RelativeStrength] * [MovingPieceofValue]
+                                                    'PieceStrength acts negatively to a decision for move (reluctancy to play with valuable pieces)
+                                                    Readme.Caption = "Piece Strength :" & PieceStrength
+                                                    Pause (pauseTime)
+                                                    End If
+                        ' ASSESS VALUE OF TARGET PIECE (Factor 3)
+                        ' MULTIPLY BY USER-DEFINED COFACTOR FOR AGGRESSIVENESS TOWARDS ATTACKS
+                        If TargetPiece = ![PieceID] Then
+                                                    'TargetPStrength = ![RelativeStrength]
+                                                    TargetPStrength = ![RelativeStrength] * [CapturingAggressiveness]
+                                                    Readme.Caption = "Target Piece Strength :" & TargetPStrength
+                                                    Pause (pauseTime)
+                                                    End If
+                        .MoveNext
+                     Loop
+                     End With
+                        'movingValue.Caption = "Moving Piece Value:" & PieceStrength & " "
+                        'CaptureValue.Caption = "Target Piece Value:" & TargetPStrength & " "
+                        'Pause (pauseTime)
+                        'MsgBox PieceStrength
+                        
+                        
+' OPEN OPPONENT'S TABLE TEMP...SQUARES AND SCAN FOR THREATENED SQUARES  (Current Factors 5 and 6)
+        'Readme.Caption = "OPENING TABLE TEMPWHITESQUARES AND SCAN FOR SQUARES COVERED BY OPPONENT"
+                    'Pause (pauseTime)
+        If playersTurn = 1 Then Set rstWSquares = db.OpenRecordset("TEMPBLACKSQUARES", dbOpenDynaset)
+        If playersTurn = 2 Then Set rstWSquares = db.OpenRecordset("TEMPWHITESQUARES", dbOpenDynaset)
+                    With rstWSquares
+                     Do While Not .EOF
+                        'MOVE BECAUSE THE PIECE IS THREATENED (Factor 4)
+                        If xy1 = !newlocation Then
+                                                'MsgBox PlayingPiece & " is threatened!"
+                                                'Readme.Caption = PlayingPiece & " is threatened!"
+                                                'Pause (pauseTime)
+                                                'Piecethreatened = PieceStrength
+                                                Piecethreatened = PieceStrength * [ThreatThreshold]
+                                                Readme.Caption = "Peacethreatened = " & Piecethreatened
+                                                Pause (pauseTime)
+                                                End If
+                        'DON'T MOVE, BECAUSE TARGET SQUARE IS THREATENED - SACRIFICE WILLINGESS?
+                        If xy2 = !newlocation Then
+                                            'MsgBox "Examined Square is within Opponent's reach"
+                                            'Readme.Caption = "Examined Square is within Opponent's reach"
+                                            'Pause (pauseTime)
+                                            'PossLostPStrength = PieceStrength
+                                            PossLostPStrength = PieceStrength * [MovetoThreatenedSqThresh]
+                                            'PossLostPStrength = PieceStrength * [AdjustLossPieceValue]
+                                            'MsgBox "Threatened square Score=" & PieceStrength & "*" & [AdjustLossPieceValue] & " = " & PossLostPStrength
+                                            Readme.Caption = "Won't move to threatened square =" & PossLostPStrength
+                                            Pause (pauseTime)
+                                            End If
+                        .MoveNext
+                        Loop
+                        End With
+                        
+' SCAN FOR PINS AND PROTECTIONS (Factor 9)
+
+        ' TO DO LIST :
+        ' 2ND LEVEL THINKING
+        ' Copy new situation to SecondLevelBoards and assess threatened pieces (from threatened pieces query)
+        ' Detect moves exposing the King and exclude them completely
+        ' Detect moves exposing the Queen and value them as most unprobable
+        ' Detect moves exposing any other piece and value the risk according to value of lost piece
+        
+        ' Also try all movements of owned pieces to assess overall score of board at a two step ahead situation (and score accordingly)
+                     
+        
+        'Score Move positively according to Area Coverage, Strength of Piece Captured
+        'Score Move negatively according to Stength of Piece moving and risk of loss when touching square covered by opponent
+                    .Edit
+                    ![totalscore] = Squares + TargetPStrength + Piecethreatened + targetPieceScore + captivePotential + protectownpieces + StrategicCheckMate - PieceStrength - PossLostPStrength - threatenedKing
+                    '![TotalScore] = BSquares + TargetPStrength + Piecethreatened - PieceStrength - PossLostPStrength
+                     Readme.Caption = "Total Score " & ![totalscore]
+                                                Pause (pauseTime)
+                    .Update
+                      recordvalues = xy1 & "," & xy2 & " = " & Str(![totalscore])
+                    If playersTurn = 1 Then WMovesCollection.AddItem Item:=recordvalues
+                    If playersTurn = 2 Then BMovesCollection.AddItem Item:=recordvalues
+                    'MsgBox "Withdrawing move and moving to next"
+                    'Readme.Caption = "Withdrawing move and moving to next"
+                                                'Pause (pauseTime)
+                    xy1 = xy2
+                    xy2 = Remxy1
+                    updateboardPos1sub
+                    updateboardPos2sub
+        'Restore temporarily captured pieces while on THINKING mode
+        'Readme.Caption = "Restoring temporarily captured pieces while on THINKING mode"
+                                                'Pause (pauseTime)
+                    Set rstrestore = db.OpenRecordset("GamePlayBoardCondition", dbOpenDynaset)
+                    With rstrestore
+                     Do While Not .EOF
+                     If TargetPiece <> 0 And xy1 = ![LocationObject] Then
+                                        'MsgBox "Moving Piece back to " & ![LocationObject]
+                                            'Readme.Caption = "Moving Piece back to " & ![LocationObject]
+                                                'Pause (pauseTime)
+                                        .Edit
+                                        ![Chesspiece] = TargetPiece
+                                        .Update
+                                        End If
+                     .MoveNext
+                     Loop
+                     Set rstrestore = Nothing
+                    End With
+                    'PieceStrength = 0
+                    'PossLostPStrength = 0
+                    'TargetPiece = 0
+                    'TargetPStrength = 0
+                    'Piecethreatened = 0
+                    'Command270_Click
+                    'Command271_Click
+                    'Pause (pauseTime)
+.MoveNext
+Loop
+'
+'Find move with highest score
+'
+'Readme.Caption = "Finding move with highest score"
+                                                'Pause (pauseTime)
+If playersTurn = 1 Then HighestScore = DMax("TotalScore", "TEMPWHITEMOVES")
+If playersTurn = 2 Then HighestScore = DMax("TotalScore", "TEMPBLACKMOVES")
+BlackScore = HighestScore
+ 'MsgBox "Best Next Move is:" & HighestScore
+'Readme.Caption = "Best Next Move Score :" & HighestScore
+                                                Pause (pauseTime)
+End With
+Set rstReadFromTemp = Nothing
+Set rstPieceValues = Nothing
+db.Close
+Set db = Nothing
+' Attempting best move
+Readme.Caption = "Attempting next move"
+Pause (pauseTime)
+
+counter = 0
+Set db1 = CurrentDb
+If playersTurn = 1 Then Set rstReadTemp = db1.OpenRecordset("TEMPWHITEMOVES", dbOpenDynaset)
+If playersTurn = 2 Then Set rstReadTemp = db1.OpenRecordset("TEMPBLACKMOVES", dbOpenDynaset)
+With rstReadTemp
+Do While Not .EOF
+counter = counter + 1
+PleaseWait.Caption = "Retrieving best move"
+            If ![totalscore] = HighestScore Then
+                    xy1 = ![LocationObject]
+                    'MsgBox xy1
+                    Remxy1 = xy1
+                    xy2 = ![newlocation]
+                    'MsgBox xy2
+                    PlayingPiece = ![Chesspiece]
+                    'Readme.Caption = "My move is:" & xy1 & "," & xy2
+                    'Pause (pauseTime)
+                    Thinking = False
+                    updateboardPos1sub
+                    updateboardPos2sub
+                    Boardrefresh
+'Update MOVES table
+ 'Readme.Caption = "Updating MOVES table"
+ 'Pause (pauseTime)
+                    Set rstWritemove = db1.OpenRecordset("MOVES", dbOpenDynaset)
+                        With rstWritemove
+                        .Edit
+                        .AddNew
+                        ![movesGameID] = [GameID]
+                        ![PosA] = xy1
+                        ![PosB] = xy2
+                        'MsgBox "PlayingPiece was:" & PlayingPiece
+                        ![MovePiece] = PlayingPiece
+                        If ExistingPieceID <> 0 Then ![TargPiece] = ExistingPieceID
+                        .Update
+                        End With
+                    Set rstWritemove = Nothing
+                    PleaseWait.Visible = False
+                    Me.Refresh
+                        Exit Sub
+                End If
+    .MoveNext
+                    Loop
+End With
+Set rstReadTemp = Nothing
+db1.Close
+Set db1 = Nothing
+Pause (pauseTime)
+' Delete Temporary tables (probably code never passes from here)
+'Readme.Caption = "Deleting TEMP Tables"
+'Pause (pauseTime)
+'
+'DoCmd.OpenTable ("TEMPBLACKMOVES")
+'MsgBox "Press OK to continue"
+DoCmd.DeleteObject acTable, "TEMPBLACKMOVES"
+DoCmd.DeleteObject acTable, "TEMPWHITEMOVES"
+DoCmd.DeleteObject acTable, "TEMPBLACKSQUARES"
+DoCmd.DeleteObject acTable, "TEMPWHITESQUARES"
+
+'***ERRORS RECORDED ON LOGIC OBSERVATIONS
+' 31/12/2022
+' Moves exposing the King should be excluded!!!
+End Sub
